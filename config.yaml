@@ -1,0 +1,69 @@
+portfolio: Buckeye
+sub_portfolio: LP
+metric: Gross Credit Losses
+forecast_type: Actual
+
+first_input_date: '2019-12-31'
+last_input_date: '2023-12-31'
+test_start_date: '2024-01-31'
+test_end_date: '2024-02-29'
+last_test_date: '2024-12-31'
+frequency: ME
+seasonal_period: 12
+benchmark_forecast_types:
+  - Original base case
+  - 2024 0+12
+
+paths:
+  raw_data: data/dummy_gross_credit_losses.csv
+
+columns:
+  forecast_type: FORECAST_TYPE
+  portfolio: PORTFOLIO
+  sub_portfolio: SUB_PORTFOLIO
+  metric: METRIC
+  date: DATE
+  value: METRIC_VALUE
+
+stationarity:
+  adf_alpha: 0.05
+  max_acf_lag: 36
+  max_pacf_lag: 24
+  seasonal_check_max_lag: 36
+
+validation:
+  train_start: '2019-12-31'
+  valid_start: '2022-01-31'
+  valid_end: '2023-12-31'
+  step_months: 3
+
+main_grid:
+  p: [0, 1, 2]
+  d: [0, 1]
+  q: [0, 1, 2]
+  P: [0, 1]
+  D: [0, 1]
+  Q: [0, 1, 2]
+  S: 12
+
+active_auto_arima:
+  seasonal: true
+  m: 12
+  start_p: 0
+  start_q: 0
+  max_p: 3
+  max_q: 3
+  start_P: 0
+  start_Q: 0
+  max_P: 2
+  max_Q: 2
+  d: null
+  D: null
+  stepwise: true
+  suppress_warnings: true
+  error_action: ignore
+
+scoring:
+  use_aic: true
+  use_bic: false
+  objective: mape_only

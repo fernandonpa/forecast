@@ -57,11 +57,27 @@ def build_expanding_validation_splits(
     valid_start: str,
     valid_end: str,
     step_months: int = 3,
+    enable_fixed_window_tuning: bool = False,
+    window_months: int = 12,
 ) -> List[Dict[str, str]]:
-    """Build expanding-window validation splits by stepping validation start by quarter."""
+    """Build validation splits in either expanding or fixed-window mode.
+
+    Expanding mode (default):
+    - train_end grows with each split
+    - validation window is [curr_valid_start, valid_end]
+
+    Fixed-window mode:
+    - train_end grows with each split
+    - validation window has fixed size `window_months`
+    """
     tr_start = pd.Timestamp(train_start)
     va_start = pd.Timestamp(valid_start)
     va_end = pd.Timestamp(valid_end)
+
+    if step_months < 1:
+        raise ValueError("step_months must be >= 1")
+    if window_months < 1:
+        raise ValueError("window_months must be >= 1")
 
     splits: List[Dict[str, str]] = []
     i = 1
@@ -69,13 +85,21 @@ def build_expanding_validation_splits(
 
     while curr <= va_end:
         tr_end = curr - pd.offsets.MonthEnd(1)
+
+        if enable_fixed_window_tuning:
+            curr_valid_end = curr + pd.offsets.MonthEnd(window_months - 1)
+            if curr_valid_end > va_end:
+                break
+        else:
+            curr_valid_end = va_end
+
         splits.append(
             {
                 "name": f"split_{i}",
                 "train_start": tr_start.strftime("%Y-%m-%d"),
                 "train_end": tr_end.strftime("%Y-%m-%d"),
                 "valid_start": curr.strftime("%Y-%m-%d"),
-                "valid_end": va_end.strftime("%Y-%m-%d"),
+                "valid_end": curr_valid_end.strftime("%Y-%m-%d"),
             }
         )
         curr = curr + pd.offsets.MonthEnd(step_months)
